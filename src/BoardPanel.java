@@ -73,21 +73,6 @@ class BoardPanel extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Gambar Path Dijkstra
-        if (shortestPath != null && shortestPath.size() > 1) {
-            g2d.setColor(new Color(241, 196, 15));
-            Stroke dashed = new BasicStroke(4, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0);
-            g2d.setStroke(dashed);
-
-            for (int i = 0; i < shortestPath.size() - 1; i++) {
-                Point p1 = getTileCenter(shortestPath.get(i));
-                Point p2 = getTileCenter(shortestPath.get(i+1));
-                if (p1 != null && p2 != null) {
-                    g2d.drawLine(p1.x, p1.y, p2.x, p2.y);
-                }
-            }
-        }
-
         // Gambar Tangga
         if (ladders != null) {
             g2d.setStroke(new BasicStroke(6));
