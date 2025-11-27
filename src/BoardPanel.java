@@ -6,10 +6,12 @@ import java.util.Map;
 class BoardPanel extends JPanel {
     private Tile[] tiles = new Tile[65]; // Array size 64 + 1 (index 0 unused)
     private Map<Integer, Integer> ladders;
+    private Map<Integer, Integer> bonusNodes; // Node -> Bonus Point #bonus node
     private List<Integer> shortestPath = null;
 
-    public BoardPanel(Map<Integer, Integer> ladders) {
+    public BoardPanel(Map<Integer, Integer> ladders, Map<Integer, Integer> bonusNodes) {
         this.ladders = ladders;
+        this.bonusNodes = bonusNodes;
         setLayout(new GridLayout(8, 8, 2, 2)); // UBAH KE 8x8
         setBackground(new Color(44, 62, 80));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -34,7 +36,9 @@ class BoardPanel extends JPanel {
     }
 
     private void addTile(int id) {
-        Tile tile = new Tile(id);
+        boolean hasBonus = bonusNodes.containsKey(id); //#bonus node
+        int bonusPoint = hasBonus ? bonusNodes.get(id) : 0; //#bonus node
+        Tile tile = new Tile(id, hasBonus, bonusPoint);
         tiles[id] = tile;
         add(tile);
     }
@@ -45,6 +49,17 @@ class BoardPanel extends JPanel {
         }
         repaint();
     }
+
+    //#bonus node
+    public void updateBonusNodes(Map<Integer, Integer> newBonusNodes) {
+        this.bonusNodes = newBonusNodes;
+        for (int i = 1; i <= 64; i++) {
+            boolean hasBonus = bonusNodes.containsKey(i);
+            int bonusPoint = hasBonus ? bonusNodes.get(i) : 0;
+            tiles[i].setBonusStatus(hasBonus, bonusPoint);
+        }
+        repaint();
+    }//#bonus node
 
     public void setShortestPath(List<Integer> path) {
         this.shortestPath = path;
