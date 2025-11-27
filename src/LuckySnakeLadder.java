@@ -11,6 +11,7 @@ public class LuckySnakeLadder extends JPanel {
     private MainApp mainApp;
 
     private Map<Integer, Integer> ladders = new HashMap<>();
+    private Map<Integer, Integer> bonusNodes = new HashMap<>(); // Node -> Bonus Point #bonus node
 
     private Stack<Integer> p1History = new Stack<>();
     private Stack<Integer> p2History = new Stack<>();
@@ -19,6 +20,9 @@ public class LuckySnakeLadder extends JPanel {
 
     private int p1VisualPos = 1;
     private int p2VisualPos = 1;
+    private int p1Score = 0; // Total bonus point Player 1 #bonus node
+    private int p2Score = 0; // Total bonus point Player 2 #bonus node
+    private JLabel scoreLabel;
     private int currentPlayer = 1;
     private boolean isAnimating = false;
     private Timer animTimer;
@@ -43,11 +47,12 @@ public class LuckySnakeLadder extends JPanel {
         setBackground(new Color(44, 62, 80));
 
         generateStrictLadders();
+        generateRandomBonusNodes(); // Generate bonus nodes #bonus node
 
         p1History.push(1);
         p2History.push(1);
 
-        boardPanel = new BoardPanel(ladders);
+        boardPanel = new BoardPanel(ladders, bonusNodes); //#tambahin bonus node
         add(boardPanel, BorderLayout.CENTER);
 
         controlPanel = new ControlPanel();
@@ -60,6 +65,13 @@ public class LuckySnakeLadder extends JPanel {
         btnBack.setForeground(Color.WHITE);
         btnBack.addActionListener(e -> mainApp.showCard("MENU"));
         topPanel.add(btnBack);
+
+        // Score labels #bonus node
+        scoreLabel = new JLabel("  |  " + p1Name + ": " + p2Score + "pts  |  " + p2Name + ": " + p1Score + " pts");
+        scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        scoreLabel.setForeground(new Color(241, 196, 15));
+        topPanel.add(scoreLabel);// #bonus node
+
         add(topPanel, BorderLayout.NORTH);
 
         boardPanel.updatePositions(1, 1);
@@ -68,6 +80,34 @@ public class LuckySnakeLadder extends JPanel {
         controlPanel.setGameReference(this);
 
         animTimer = new Timer(200, e -> processAnimation());
+    }
+    //#bonus node
+    private void generateRandomBonusNodes() {
+        Random rand = new Random();
+
+        // Jumlah node bonus acak antara 5-10
+        int bonusCount = rand.nextInt(6) + 5; // 5 sampai 10 node
+
+        Set<Integer> usedNodes = new HashSet<>();
+
+        // Hindari node 1 (start), node 64 (finish), dan node yang sudah ada tangga
+        usedNodes.add(1);
+        usedNodes.add(MAX_TILE);
+        usedNodes.addAll(ladders.keySet());
+        usedNodes.addAll(ladders.values());
+
+        while (bonusNodes.size() < bonusCount) {
+            int node = rand.nextInt(MAX_TILE - 2) + 2; // Node 2-63
+            if (!usedNodes.contains(node)) {
+                int bonusPoint = rand.nextInt(5) + 1; // 1-5 point
+                bonusNodes.put(node, bonusPoint);
+                usedNodes.add(node);
+            }
+        }
+    }//#bonus node
+
+    private void updateScoreDisplay() {
+        scoreLabel.setText("  |  " + p1Name + ": " + p1Score + "pts  |  " + p2Name + ": " + p2Score + " pts");
     }
 
     private void updateTurnLabel() {
@@ -272,6 +312,33 @@ public class LuckySnakeLadder extends JPanel {
     private void finishTurnLogic() {
         int currentPos = (currentPlayer == 1) ? p1VisualPos : p2VisualPos;
 
+        // Check bonus node #bonus node
+        if (bonusNodes.containsKey(currentPos)) {
+            int bonusPoint = bonusNodes.get(currentPos);
+            if (currentPlayer == 1) {
+                p1Score += bonusPoint;
+            } else {
+                p2Score += bonusPoint;
+            }
+
+            updateScoreDisplay();
+
+            String playerName = (currentPlayer == 1) ? p1Name : p2Name;
+
+            // Show notification
+            JOptionPane.showMessageDialog(this,
+                    playerName + " mendapat BONUS POINT!\n" +
+                            "Point yang diperoleh: +" + bonusPoint + " pts\n" +
+                            "Total Score: " + ((currentPlayer == 1) ? p1Score : p2Score) + " pts",
+                    "Bonus Point!",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+
+            // Remove bonus node after collected
+            bonusNodes.remove(currentPos);
+            boardPanel.updateBonusNodes(bonusNodes);
+        }//#bonus node
+
         // --- Feedback Tangga ---
         // Karena logika naik tangga sudah "baked in" di playTurn,
         // di sini kita hanya memberi notifikasi visual/Dijkstra.
@@ -282,10 +349,11 @@ public class LuckySnakeLadder extends JPanel {
 
         // Cek Menang
         if (currentPos == MAX_TILE) {
-            String winner = (currentPlayer == 1) ? p1Name : p2Name;
-            JOptionPane.showMessageDialog(this, "SELAMAT! " + winner + " MENANG!");
-            controlPanel.setGameOver(winner + " MENANG!");
+            String raceWinner = (currentPlayer == 1) ? p1Name : p2Name;
             animTimer.stop();
+
+            // Show final leaderboard
+            showFinalLeaderboard(raceWinner);
         } else {
             // Logika Bonus Turn 5
             if (lastDiceRoll == 5) {
@@ -298,6 +366,185 @@ public class LuckySnakeLadder extends JPanel {
             isAnimating = false;
             controlPanel.enableButtons();
             animTimer.stop();
+        }
+    }
+    private void showFinalLeaderboard(String raceWinner) {
+        // Create leaderboard dialog
+        JDialog leaderboardDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
+                "🏆 GAME OVER - LEADERBOARD", true);
+        leaderboardDialog.setSize(500, 400);
+        leaderboardDialog.setLocationRelativeTo(this);
+        leaderboardDialog.setLayout(new BorderLayout(10, 10));
+
+        // Header Panel
+        JPanel headerPanel = new JPanel();
+        headerPanel.setBackground(new Color(44, 62, 80));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel titleLabel = new JLabel("🏁 PERMAINAN SELESAI!");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        headerPanel.add(titleLabel);
+
+        JLabel raceWinnerLabel = new JLabel("Pemain Tercepat: " + raceWinner);
+        raceWinnerLabel.setFont(new Font("Segoe UI", Font.ITALIC, 16));
+        raceWinnerLabel.setForeground(new Color(241, 196, 15));
+        raceWinnerLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel headerContainer = new JPanel(new GridLayout(2, 1, 5, 5));
+        headerContainer.setBackground(new Color(44, 62, 80));
+        headerContainer.add(titleLabel);
+        headerContainer.add(raceWinnerLabel);
+        leaderboardDialog.add(headerContainer, BorderLayout.NORTH);
+
+        // Leaderboard Panel
+        JPanel leaderboardPanel = new JPanel();
+        leaderboardPanel.setLayout(new BoxLayout(leaderboardPanel, BoxLayout.Y_AXIS));
+        leaderboardPanel.setBackground(new Color(236, 240, 241));
+        leaderboardPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+
+        // Title for leaderboard
+        JLabel leaderboardTitle = new JLabel("PERINGKAT BERDASARKAN BONUS POINT");
+        leaderboardTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        leaderboardTitle.setForeground(new Color(52, 73, 94));
+        leaderboardTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        leaderboardPanel.add(leaderboardTitle);
+        leaderboardPanel.add(Box.createVerticalStrut(20));
+
+        // Create player list with scores
+        java.util.List<PlayerScore> players = new java.util.ArrayList<>();
+        players.add(new PlayerScore(p1Name, p1Score));
+        players.add(new PlayerScore(p2Name, p2Score));
+
+        // Sort by score (highest first)
+        players.sort((a, b) -> Integer.compare(b.score, a.score));
+
+        // Display rankings
+        String[] medals = {"🥇", "🥈"};
+        Color[] rankColors = {
+                new Color(255, 215, 0),    // Gold
+                new Color(192, 192, 192)   // Silver
+        };
+
+        for (int i = 0; i < players.size(); i++) {
+            PlayerScore player = players.get(i);
+            JPanel rankPanel = createRankPanel(
+                    medals[i],
+                    i + 1,
+                    player.name,
+                    player.score,
+                    rankColors[i]
+            );
+            leaderboardPanel.add(rankPanel);
+            leaderboardPanel.add(Box.createVerticalStrut(15));
+        }
+
+        // Winner announcement
+        PlayerScore pointWinner = players.get(0);
+        String winnerText;
+        if (pointWinner.score == players.get(1).score) {
+            winnerText = "SERI! Kedua pemain memiliki point yang sama!";
+        } else {
+            winnerText = "JUARA BONUS POINT: " + pointWinner.name + "!";
+        }
+
+        JLabel winnerLabel = new JLabel(winnerText);
+        winnerLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        winnerLabel.setForeground(new Color(46, 204, 113));
+        winnerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        leaderboardPanel.add(Box.createVerticalStrut(10));
+        leaderboardPanel.add(winnerLabel);
+
+        JScrollPane scrollPane = new JScrollPane(leaderboardPanel);
+        scrollPane.setBorder(null);
+        leaderboardDialog.add(scrollPane, BorderLayout.CENTER);
+
+        // Button Panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+        buttonPanel.setBackground(new Color(236, 240, 241));
+
+        JButton btnNewGame = createDialogButton("🎮 Main Lagi", new Color(46, 204, 113));
+        btnNewGame.addActionListener(e -> {
+            leaderboardDialog.dispose();
+            mainApp.showCard("SETUP");
+        });
+
+        JButton btnMenu = createDialogButton("Menu Utama", new Color(52, 152, 219));
+        btnMenu.addActionListener(e -> {
+            leaderboardDialog.dispose();
+            mainApp.showCard("MENU");
+        });
+
+        JButton btnExit = createDialogButton("Keluar", new Color(231, 76, 60));
+        btnExit.addActionListener(e -> System.exit(0));
+
+        buttonPanel.add(btnNewGame);
+        buttonPanel.add(btnMenu);
+        buttonPanel.add(btnExit);
+
+        leaderboardDialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Update control panel
+        controlPanel.setGameOver("GAME OVER - " + pointWinner.name + " Juara Point!");
+
+        // Show dialog
+        leaderboardDialog.setVisible(true);
+    }
+
+    private JPanel createRankPanel(String medal, int rank, String name, int score, Color accentColor) {
+        JPanel panel = new JPanel(new BorderLayout(15, 0));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(accentColor, 3, true),
+                BorderFactory.createEmptyBorder(15, 20, 15, 20)
+        ));
+        panel.setMaximumSize(new Dimension(400, 80));
+
+        // Medal and Rank
+        JLabel medalLabel = new JLabel(medal + " #" + rank);
+        medalLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        medalLabel.setForeground(accentColor);
+
+        // Player Name
+        JLabel nameLabel = new JLabel(name);
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        nameLabel.setForeground(new Color(44, 62, 80));
+
+        // Score
+        JLabel scoreLabel = new JLabel(score + " pts");
+        scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        scoreLabel.setForeground(new Color(241, 196, 15));
+
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        leftPanel.setBackground(Color.WHITE);
+        leftPanel.add(medalLabel);
+        leftPanel.add(nameLabel);
+
+        panel.add(leftPanel, BorderLayout.WEST);
+        panel.add(scoreLabel, BorderLayout.EAST);
+
+        return panel;
+    }
+
+    private JButton createDialogButton(String text, Color bg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+    // Inner class for player score
+    private static class PlayerScore {
+        String name;
+        int score;
+
+        PlayerScore(String name, int score) {
+            this.name = name;
+            this.score = score;
         }
     }
 }
