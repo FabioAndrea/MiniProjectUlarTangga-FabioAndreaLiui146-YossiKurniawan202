@@ -1,26 +1,31 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Tile extends JPanel {
     private int id;
-    private boolean p1Present = false;
-    private boolean p2Present = false;
     private boolean hasBonus = false;
     private int bonusPoint = 0;
+
+    // List player untuk render banyak pion
+    private List<LuckySnakeLadder.Player> playersOnTile = new ArrayList<>();
 
     public Tile(int id, boolean hasBonus, int bonusPoint) {
         this.id = id;
         this.hasBonus = hasBonus;
         this.bonusPoint = bonusPoint;
-
         setOpaque(false);
         setLayout(null);
     }
 
-    public void setPlayers(boolean p1, boolean p2) {
-        this.p1Present = p1;
-        this.p2Present = p2;
+    public void clearPlayers() {
+        playersOnTile.clear();
+        repaint();
+    }
+
+    public void addPlayer(LuckySnakeLadder.Player p) {
+        playersOnTile.add(p);
         repaint();
     }
 
@@ -38,53 +43,28 @@ public class Tile extends JPanel {
 
         int w = getWidth();
         int h = getHeight();
-        int size = Math.min(w, h) - 4; // Margin biar tidak terpotong
-
+        int size = Math.min(w, h) - 4;
         int cx = w / 2;
         int cy = h / 2;
 
-        // --- 1. Background Node (Lingkaran) ---
-        if (id == 64) {
-            g2d.setColor(new Color(255, 215, 0, 220)); // Emas Solid (Finish)
-        } else if (id == 1) {
-            g2d.setColor(new Color(46, 204, 113, 220)); // Hijau Solid (Start)
-        } else if (hasBonus) {
-            g2d.setColor(new Color(100, 50, 200, 200)); // Ungu terang jika ada Bonus
-        } else {
-            g2d.setColor(new Color(30, 30, 60, 200)); // Biru Gelap (Biasa)
-        }
-        g2d.fillOval(cx - size / 2, cy - size / 2, size, size);
+        if (id == 64) g2d.setColor(new Color(255, 215, 0, 220));
+        else if (id == 1) g2d.setColor(new Color(46, 204, 113, 220));
+        else if (hasBonus) g2d.setColor(new Color(100, 50, 200, 200));
+        else g2d.setColor(new Color(30, 30, 60, 200));
 
-        // --- 2. Frame Putih ---
+        g2d.fillOval(cx - size / 2, cy - size / 2, size, size);
         g2d.setColor(Color.WHITE);
         g2d.setStroke(new BasicStroke(2f));
         g2d.drawOval(cx - size / 2, cy - size / 2, size, size);
 
-        // --- 3. Teks di Tengah (LOGIKA BARU) ---
         String text;
         Font font;
-        Color textColor;
+        Color textColor = Color.WHITE;
 
-        if (id == 64) {
-            text = "FINISH";
-            font = new Font("Segoe UI", Font.BOLD, 10);
-            textColor = Color.BLACK;
-        } else if (id == 1) {
-            text = "START";
-            font = new Font("Segoe UI", Font.BOLD, 10);
-            textColor = Color.WHITE;
-        } else if (hasBonus) {
-            // === INI YANG DIMINTA ===
-            // Tampilkan Bonus Point, bukan ID Node
-            text = "+" + bonusPoint;
-            font = new Font("Segoe UI", Font.BOLD, 18); // Font Besar
-            textColor = new Color(255, 215, 0); // Warna Emas
-        } else {
-            // Jika tidak ada bonus, tampilkan ID kecil saja sebagai penanda
-            text = String.valueOf(id);
-            font = new Font("Segoe UI", Font.PLAIN, 12); // Font Biasa
-            textColor = new Color(200, 200, 200); // Abu-abu terang
-        }
+        if (id == 64) { text = "FINISH"; font = new Font("Segoe UI", Font.BOLD, 10); textColor = Color.BLACK; }
+        else if (id == 1) { text = "START"; font = new Font("Segoe UI", Font.BOLD, 10); }
+        else if (hasBonus) { text = "+" + bonusPoint; font = new Font("Segoe UI", Font.BOLD, 18); textColor = Color.YELLOW; }
+        else { text = String.valueOf(id); font = new Font("Segoe UI", Font.PLAIN, 12); textColor = Color.LIGHT_GRAY; }
 
         g2d.setFont(font);
         g2d.setColor(textColor);
@@ -92,19 +72,20 @@ public class Tile extends JPanel {
         int tx = cx - fm.stringWidth(text) / 2;
         int ty = cy + fm.getAscent() / 2 - 2;
 
-        // Geser teks sedikit jika ada pemain agar tidak tertumpuk
-        if (p1Present || p2Present) {
-            ty -= 6;
-        }
-
+        if(!playersOnTile.isEmpty()) ty -= 8;
         g2d.drawString(text, tx, ty);
 
-        // --- 4. Tanda Pemain (Kecil di bawah teks) ---
-        if (p1Present) {
-            drawPlayer(g2d, cx - 8, cy + 10, new Color(52, 152, 219)); // Biru
-        }
-        if (p2Present) {
-            drawPlayer(g2d, cx + 8, cy + 10, new Color(231, 76, 60)); // Merah
+        // Render hingga 4 pemain
+        int offset = 10;
+        for (LuckySnakeLadder.Player p : playersOnTile) {
+            int px = cx, py = cy + 5;
+            switch(p.id) {
+                case 0: px -= offset; py -= offset/2; break; // P1
+                case 1: px += offset; py -= offset/2; break; // P2
+                case 2: px -= offset; py += offset; break;   // P3
+                case 3: px += offset; py += offset; break;   // P4
+            }
+            drawPlayer(g2d, px, py, p.color);
         }
     }
 

@@ -3,7 +3,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 
 class ControlPanel extends JPanel {
-    private JButton rollButton; // Tombol Hint Dihapus
+    private JButton rollButton;
     private JLabel diceLabel, colorLabel, statusLabel, turnLabel;
     private LuckySnakeLadder game;
 
@@ -22,8 +22,8 @@ class ControlPanel extends JPanel {
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 4;
         add(turnLabel, gbc);
 
-        // Panel Tombol (Hanya Roll Button sekarang)
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 1, 5, 10)); // Grid 1 baris
+        // Panel Tombol
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 1, 5, 10));
         buttonPanel.setOpaque(false);
 
         rollButton = createStyledButton("🎲 KOCOK DADU", new Color(39, 174, 96));
@@ -89,12 +89,13 @@ class ControlPanel extends JPanel {
 
     public void setGameReference(LuckySnakeLadder game) { this.game = game; }
 
-    public void setTurnLabel(String text) {
+    // --- FIX BAGIAN INI ---
+    // Sekarang menerima String text DAN Color playerColor
+    public void setTurnLabel(String text, Color playerColor) {
         turnLabel.setText(text);
-        if (text.contains("Biru")) turnLabel.setForeground(new Color(52, 152, 219));
-        else if (text.contains("Merah")) turnLabel.setForeground(new Color(231, 76, 60));
-        else turnLabel.setForeground(Color.WHITE);
+        turnLabel.setForeground(playerColor);
     }
+    // ----------------------
 
     public void updateStatus(String text, Color color, int diceVal, boolean isGreen) {
         statusLabel.setText(text);
