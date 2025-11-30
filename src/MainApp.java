@@ -9,20 +9,12 @@ public class MainApp extends JFrame {
     private SetupPanel setupPanel;
     private LuckySnakeLadder gamePanel;
 
-    // Tambahkan variabel SoundManager
-    private SoundManager soundManager;
-
     public MainApp() {
-        setTitle("Lucky Snake Ladder - Ultimate Edition");
+        setTitle("Lucky Snake Ladder - Spiral Edition");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 800);
+        setSize(1100, 900); // Larger size for spiral board
         setLocationRelativeTo(null);
 
-        // --- MULAI MUSIK DI SINI ---
-        soundManager = new SoundManager();
-        // Pastikan file "bgm.wav" ada di folder proyek utama Anda
-        soundManager.playMusic("bgm.wav");
-        // ---------------------------
 
         // Setup CardLayout
         cardLayout = new CardLayout();
@@ -53,10 +45,14 @@ public class MainApp extends JFrame {
     }
 
     public static void main(String[] args) {
+        // Set UI Look and Feel menjadi lebih modern (Cross Platform)
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            // Global UI Tweaks
             UIManager.put("Button.arc", 15);
             UIManager.put("Component.arc", 15);
+            UIManager.put("ProgressBar.arc", 15);
+            UIManager.put("TextComponent.arc", 15);
         } catch (Exception ignored) {}
 
         SwingUtilities.invokeLater(() -> new MainApp().setVisible(true));
