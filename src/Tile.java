@@ -1,7 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.*;
 
-class Tile extends JPanel {
+public class Tile extends JPanel {
     private int id;
     private boolean p1Present = false;
     private boolean p2Present = false;
@@ -13,17 +14,8 @@ class Tile extends JPanel {
         this.hasBonus = hasBonus;
         this.bonusPoint = bonusPoint;
 
-        // Desain Tile Checkerboard Modern
-        if (id % 2 == 0) setBackground(new Color(236, 240, 241)); // Putih Tulang
-        else setBackground(new Color(189, 195, 199)); // Abu-abu Silver
-
-        setLayout(new BorderLayout());
-
-        JLabel numLabel = new JLabel(String.valueOf(id), SwingConstants.LEFT);
-        numLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        numLabel.setForeground(new Color(127, 140, 141));
-        numLabel.setBorder(BorderFactory.createEmptyBorder(2, 4, 0, 0));
-        add(numLabel, BorderLayout.NORTH);
+        setOpaque(false);
+        setLayout(null);
     }
 
     public void setPlayers(boolean p1, boolean p2) {
@@ -31,12 +23,12 @@ class Tile extends JPanel {
         this.p2Present = p2;
         repaint();
     }
-    // #bonus node
+
     public void setBonusStatus(boolean hasBonus, int bonusPoint) {
         this.hasBonus = hasBonus;
         this.bonusPoint = bonusPoint;
         repaint();
-    } // #bonus node
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -46,86 +38,81 @@ class Tile extends JPanel {
 
         int w = getWidth();
         int h = getHeight();
+        int size = Math.min(w, h) - 4; // Margin biar tidak terpotong
 
-        // Draw bonus indicator #bonus node
-        if (hasBonus) {
-            // Star background
-            g2d.setColor(new Color(255, 215, 0, 100)); // Gold with transparency
-            g2d.fillRect(0, 0, w, h);
+        int cx = w / 2;
+        int cy = h / 2;
 
-            // Draw star icon
-            drawStar(g2d, w - 18, 18, 8, new Color(241, 196, 15));
+        // --- 1. Background Node (Lingkaran) ---
+        if (id == 64) {
+            g2d.setColor(new Color(255, 215, 0, 220)); // Emas Solid (Finish)
+        } else if (id == 1) {
+            g2d.setColor(new Color(46, 204, 113, 220)); // Hijau Solid (Start)
+        } else if (hasBonus) {
+            g2d.setColor(new Color(100, 50, 200, 200)); // Ungu terang jika ada Bonus
+        } else {
+            g2d.setColor(new Color(30, 30, 60, 200)); // Biru Gelap (Biasa)
+        }
+        g2d.fillOval(cx - size / 2, cy - size / 2, size, size);
 
-            // Draw bonus point value
-            g2d.setColor(new Color(241, 196, 15));
-            g2d.setFont(new Font("Segoe UI", Font.BOLD, 10));
-            String bonusText = "+" + bonusPoint;
-            FontMetrics fm = g2d.getFontMetrics();
-            g2d.drawString(bonusText, w - 18 - fm.stringWidth(bonusText)/2, 28);
+        // --- 2. Frame Putih ---
+        g2d.setColor(Color.WHITE);
+        g2d.setStroke(new BasicStroke(2f));
+        g2d.drawOval(cx - size / 2, cy - size / 2, size, size);
+
+        // --- 3. Teks di Tengah (LOGIKA BARU) ---
+        String text;
+        Font font;
+        Color textColor;
+
+        if (id == 64) {
+            text = "FINISH";
+            font = new Font("Segoe UI", Font.BOLD, 10);
+            textColor = Color.BLACK;
+        } else if (id == 1) {
+            text = "START";
+            font = new Font("Segoe UI", Font.BOLD, 10);
+            textColor = Color.WHITE;
+        } else if (hasBonus) {
+            // === INI YANG DIMINTA ===
+            // Tampilkan Bonus Point, bukan ID Node
+            text = "+" + bonusPoint;
+            font = new Font("Segoe UI", Font.BOLD, 18); // Font Besar
+            textColor = new Color(255, 215, 0); // Warna Emas
+        } else {
+            // Jika tidak ada bonus, tampilkan ID kecil saja sebagai penanda
+            text = String.valueOf(id);
+            font = new Font("Segoe UI", Font.PLAIN, 12); // Font Biasa
+            textColor = new Color(200, 200, 200); // Abu-abu terang
         }
 
-        // Shadow for pawns #bonus node
+        g2d.setFont(font);
+        g2d.setColor(textColor);
+        FontMetrics fm = g2d.getFontMetrics();
+        int tx = cx - fm.stringWidth(text) / 2;
+        int ty = cy + fm.getAscent() / 2 - 2;
 
-        // Shadow Pion
+        // Geser teks sedikit jika ada pemain agar tidak tertumpuk
         if (p1Present || p2Present) {
-            g2d.setColor(new Color(0,0,0,30));
-            g2d.fillOval(w/2 - 10, h/2 + 10, 24, 8);
+            ty -= 6;
         }
 
+        g2d.drawString(text, tx, ty);
+
+        // --- 4. Tanda Pemain (Kecil di bawah teks) ---
         if (p1Present) {
-            int offsetX = p2Present ? -8 : 0;
-            drawPawn(g2d, w/2 + offsetX, h/2 + 5, new Color(52, 152, 219), "1"); // Biru Modern
+            drawPlayer(g2d, cx - 8, cy + 10, new Color(52, 152, 219)); // Biru
         }
-
         if (p2Present) {
-            int offsetX = p1Present ? 8 : 0;
-            drawPawn(g2d, w/2 + offsetX, h/2 + 5, new Color(231, 76, 60), "2"); // Merah Modern
+            drawPlayer(g2d, cx + 8, cy + 10, new Color(231, 76, 60)); // Merah
         }
     }
-    // #bonus node
-    private void drawStar(Graphics2D g2, int cx, int cy, int radius, Color color) {
-        int[] xPoints = new int[10];
-        int[] yPoints = new int[10];
 
-        double angle = Math.PI / 2; // Start from top
-        double angleStep = Math.PI / 5;
-
-        for (int i = 0; i < 10; i++) {
-            int r = (i % 2 == 0) ? radius : radius / 2;
-            xPoints[i] = cx + (int)(r * Math.cos(angle));
-            yPoints[i] = cy - (int)(r * Math.sin(angle));
-            angle -= angleStep;
-        }
-
-        g2.setColor(color);
-        g2.fillPolygon(xPoints, yPoints, 10);
-
-        // Border
-        g2.setColor(new Color(243, 156, 18));
-        g2.setStroke(new BasicStroke(1.5f));
-        g2.drawPolygon(xPoints, yPoints, 10);
-    } //#bonus node
-
-    private void drawPawn(Graphics2D g2, int cx, int cy, Color color, String label) {
-        int size = 22;
-        int[] xPoints = {cx - size/2, cx + size/2, cx};
-        int[] yPoints = {cy + size/2, cy + size/2, cy - size/4};
-
-        g2.setColor(color);
-        g2.fillPolygon(xPoints, yPoints, 3);
-
-        int headR = size / 2 + 6;
-        g2.fillOval(cx - headR/2, cy - size/2 - headR/2, headR, headR);
-
-        // Border Pion
-        g2.setColor(Color.WHITE);
-        g2.setStroke(new BasicStroke(1.5f));
-        g2.drawPolygon(xPoints, yPoints, 3);
-        g2.drawOval(cx - headR/2, cy - size/2 - headR/2, headR, headR);
-
-        // Nomor
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        FontMetrics fm = g2.getFontMetrics();
-        g2.drawString(label, cx - fm.stringWidth(label)/2, cy - size/2 + 4);
+    private void drawPlayer(Graphics2D g2d, int x, int y, Color c) {
+        g2d.setColor(c);
+        g2d.fillOval(x - 5, y - 5, 10, 10);
+        g2d.setColor(Color.WHITE);
+        g2d.setStroke(new BasicStroke(1f));
+        g2d.drawOval(x - 5, y - 5, 10, 10);
     }
 }
