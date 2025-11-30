@@ -20,7 +20,7 @@ public class MainMenuPanel extends JPanel {
         gbc.gridwidth = 1;
         add(titleLabel, gbc);
 
-        JLabel subtitleLabel = new JLabel("Ultimate Edition: Dijkstra Pathfinding");
+        JLabel subtitleLabel = new JLabel("By Fabio And Yossi");
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         subtitleLabel.setForeground(new Color(236, 240, 241));
         subtitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
