@@ -8,16 +8,13 @@ public class MainApp extends JFrame {
 
     private CardLayout cardLayout;
     private JPanel mainContainer;
+    // Asumsi class MainMenuPanel & SetupPanel kamu sudah ada dan benar
     private MainMenuPanel menuPanel;
     private SetupPanel setupPanel;
     private LuckySnakeLadder gamePanel;
     private SoundManager soundManager;
 
-    // --- DATA PERSISTEN (DATABASE SEMENTARA) ---
-    // Menyimpan jumlah kemenangan balapan (Finish duluan)
     private Map<String, Integer> raceWins = new HashMap<>();
-
-    // Menyimpan total poin bonus akumulatif
     private Map<String, Integer> totalCumulativeScore = new HashMap<>();
 
     public MainApp() {
@@ -31,8 +28,8 @@ public class MainApp extends JFrame {
         cardLayout = new CardLayout();
         mainContainer = new JPanel(cardLayout);
 
-        menuPanel = new MainMenuPanel(this);
-        setupPanel = new SetupPanel(this);
+        menuPanel = new MainMenuPanel(this, soundManager);
+        setupPanel = new SetupPanel(this, soundManager);
 
         mainContainer.add(menuPanel, "MENU");
         mainContainer.add(setupPanel, "SETUP");
@@ -42,40 +39,49 @@ public class MainApp extends JFrame {
     }
 
     public void showCard(String cardName) {
+        // --- LOGIC AUDIO SAAT PINDAH MENU ---
+        if (cardName.equals("MENU")) {
+            // Balik Menu -> Matiin semua musik
+            soundManager.stopBGM();
+            soundManager.stopWinMusic();
+        }
+        else if (cardName.equals("SETUP")) {
+            // Masuk Setup -> Nyalain BGM Full Volume (100%)
+            soundManager.setBGMScale(1.0f);
+            soundManager.playBGM("game_bgm.wav");
+        }
+
         cardLayout.show(mainContainer, cardName);
     }
 
-    // Method ini dipanggil saat tombol START atau RESTART ditekan
     public void startGame(List<String> playerNames) {
         if (gamePanel != null) {
             mainContainer.remove(gamePanel);
         }
 
-        // Pastikan pemain ada di database, tapi JANGAN RESET nilainya jika sudah ada
         for(String name : playerNames) {
-            raceWins.putIfAbsent(name, 0); // Jika belum ada, set 0. Jika ada, biarkan.
+            raceWins.putIfAbsent(name, 0);
             totalCumulativeScore.putIfAbsent(name, 0);
         }
 
-        // Buat game baru
         gamePanel = new LuckySnakeLadder(playerNames, this, soundManager);
         mainContainer.add(gamePanel, "GAME");
+
+        soundManager.playBGM("game_bgm.wav");
+        soundManager.setBGMScale(0.875f);
 
         cardLayout.show(mainContainer, "GAME");
         gamePanel.requestFocusInWindow();
     }
 
-    // Menambah 1 poin kemenangan balapan
     public void addRaceWin(String playerName) {
         raceWins.put(playerName, raceWins.getOrDefault(playerName, 0) + 1);
     }
 
-    // Menambah skor poin bonus
     public void addScore(String playerName, int score) {
         totalCumulativeScore.put(playerName, totalCumulativeScore.getOrDefault(playerName, 0) + score);
     }
 
-    // Getters untuk Leaderboard
     public int getRaceWins(String playerName) { return raceWins.getOrDefault(playerName, 0); }
     public int getTotalScore(String playerName) { return totalCumulativeScore.getOrDefault(playerName, 0); }
 

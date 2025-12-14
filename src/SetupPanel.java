@@ -8,10 +8,12 @@ public class SetupPanel extends JPanel {
     private JTextField[] nameFields;
     private JLabel[] labels;
 
-    public SetupPanel(MainApp app) {
+    // --- UPDATE: Constructor Menerima SoundManager ---
+    public SetupPanel(MainApp app, SoundManager soundManager) {
         setLayout(new GridBagLayout());
         setBackground(new Color(236, 240, 241));
 
+        // ... (Kode GridBagLayout & Komponen Label/Field SAMA seperti sebelumnya) ...
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -53,7 +55,11 @@ public class SetupPanel extends JPanel {
             add(nameFields[i], gbc);
         }
 
-        playerCountCombo.addActionListener(e -> updateFields());
+        // --- UPDATE: Play Click Sound saat Ganti Combo Box ---
+        playerCountCombo.addActionListener(e -> {
+            soundManager.playSFX("click.wav");
+            updateFields();
+        });
         updateFields();
 
         JButton btnStart = new JButton("MULAI PERMAINAN");
@@ -61,7 +67,10 @@ public class SetupPanel extends JPanel {
         btnStart.setBackground(new Color(52, 73, 94));
         btnStart.setForeground(Color.WHITE);
         btnStart.setPreferredSize(new Dimension(200, 50));
+
+        // --- UPDATE: Play Click Sound ---
         btnStart.addActionListener(e -> {
+            soundManager.playSFX("click.wav");
             int count = (int) playerCountCombo.getSelectedItem();
             List<String> names = new ArrayList<>();
             for (int i = 0; i < count; i++) {
@@ -80,11 +89,16 @@ public class SetupPanel extends JPanel {
         btnBack.setBorderPainted(false);
         btnBack.setForeground(Color.GRAY);
         btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnBack.addActionListener(e -> app.showCard("MENU"));
+
+        // --- UPDATE: Play Click Sound ---
+        btnBack.addActionListener(e -> {
+            soundManager.playSFX("click.wav");
+            app.showCard("MENU");
+        });
         gbc.gridy = 8;
         add(btnBack, gbc);
     }
-
+    // ... (sisa method updateFields, createLabel, createTextField sama) ...
     private void updateFields() {
         int count = (int) playerCountCombo.getSelectedItem();
         for (int i = 0; i < 4; i++) {
@@ -94,13 +108,11 @@ public class SetupPanel extends JPanel {
         }
         revalidate(); repaint();
     }
-
     private JLabel createLabel(String text) {
         JLabel lbl = new JLabel(text);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
         return lbl;
     }
-
     private JTextField createTextField(String defaultText) {
         JTextField tf = new JTextField(defaultText);
         tf.setFont(new Font("Segoe UI", Font.PLAIN, 14));
