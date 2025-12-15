@@ -18,7 +18,7 @@ public class MainApp extends JFrame {
     private Map<String, Integer> totalCumulativeScore = new HashMap<>();
 
     public MainApp() {
-        setTitle("Lucky Snake Ladder - 4 Player Edition");
+        setTitle("Ular Tangga");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1100, 900);
         setLocationRelativeTo(null);
@@ -47,7 +47,6 @@ public class MainApp extends JFrame {
         }
         else if (cardName.equals("SETUP")) {
             // Masuk Setup -> Nyalain BGM Full Volume (100%)
-            soundManager.setBGMScale(1.0f);
             soundManager.playBGM("game_bgm.wav");
         }
 
@@ -68,7 +67,6 @@ public class MainApp extends JFrame {
         mainContainer.add(gamePanel, "GAME");
 
         soundManager.playBGM("game_bgm.wav");
-        soundManager.setBGMScale(0.875f);
 
         cardLayout.show(mainContainer, "GAME");
         gamePanel.requestFocusInWindow();

@@ -28,7 +28,7 @@ class ControlPanel extends JPanel {
         JPanel buttonPanel = new JPanel(new GridLayout(1, 1, 5, 10));
         buttonPanel.setOpaque(false);
 
-        rollButton = createStyledButton("🎲 KOCOK DADU", new Color(39, 174, 96));
+        rollButton = createStyledButton("KOCOK DADU", new Color(39, 174, 96));
         // --- UPDATE: Play Click Sound di sini (Visual Feedback) ---
         // Logika "Kocok Dadu" (dice.wav) ada di game.playTurn()
         rollButton.addActionListener(e -> {

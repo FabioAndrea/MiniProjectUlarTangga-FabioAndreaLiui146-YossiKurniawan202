@@ -118,7 +118,7 @@ public class LuckySnakeLadder extends JPanel {
             mainApp.showCard("MENU");
         });
 
-        JButton btnRestart = createNavButton("🔄 Restart");
+        JButton btnRestart = createNavButton("Restart");
         btnRestart.setBackground(new Color(231, 76, 60));
         btnRestart.addActionListener(e -> {
             soundManager.playSFX("click.wav");
@@ -282,7 +282,8 @@ public class LuckySnakeLadder extends JPanel {
         int steps = rand.nextInt(6) + 1;
         lastDiceRoll = steps;
 
-        boolean isGreen = rand.nextDouble() < 1;
+        // Tentukan Arah: 70% Maju (Hijau), 30% Mundur (Merah)
+        boolean isGreen = rand.nextDouble() < 0.7;
 
         isAnimating = true;
         controlPanel.disableButtons();
@@ -292,32 +293,43 @@ public class LuckySnakeLadder extends JPanel {
         animQueue.clear();
 
         if (isGreen) {
+            // --- LOGIKA MAJU (HIJAU) ---
             for (int i = 0; i < steps; i++) {
                 int next = simPos + 1;
                 if (next > MAX_TILE) next = MAX_TILE;
+
                 history.push(next);
                 animQueue.add(next);
                 simPos = next;
 
-                if (ladders.containsKey(simPos)) {
-                    if (isPrime(posBeforeTurn)) {
-                        int top = ladders.get(simPos);
-                        history.push(top);
-                        animQueue.add(top);
-                        simPos = top;
-                        ladderWasUsedInTurn = true;
-                    }
+                // CEK TANGGA HANYA SAAT MAJU
+                // Tangga hanya bisa diakses dari BAWAH (Start Key)
+                if (ladders.containsKey(simPos) && isPrime(posBeforeTurn)) {
+                    int top = ladders.get(simPos); // Ambil ujung atas tangga
+
+                    history.push(top);
+                    animQueue.add(top);
+                    simPos = top; // Posisi sekarang jadi di atas
+                    ladderWasUsedInTurn = true;
                 }
                 if (simPos == MAX_TILE) break;
             }
         } else {
+            // --- LOGIKA MUNDUR (MERAH) ---
+            // FIX: Tidak lagi menggunakan history.pop()
+            // Kita gunakan matematika murni (posisi - 1) agar tidak turun lewat tangga
             for (int i = 0; i < steps; i++) {
-                if (history.size() > 1) {
-                    history.pop();
-                    int prev = history.peek();
-                    animQueue.add(prev);
-                    simPos = prev;
-                }
+                int next = simPos - 1;
+                if (next < 1) next = 1; // Batas bawah 1
+
+                // PENTING: Kita PUSH posisi baru ke stack, BUKAN POP.
+                // Ini artinya kita membuat jejak langkah baru (mundur).
+                history.push(next);
+                animQueue.add(next);
+                simPos = next;
+
+                // CATATAN: Di sini TIDAK ADA pengecekan tangga.
+                // Jadi jika mundur melewati tangga, dia hanya lewat saja (tidak naik/turun).
             }
         }
 
@@ -325,11 +337,12 @@ public class LuckySnakeLadder extends JPanel {
                 isGreen ? new Color(39, 174, 96) : new Color(231, 76, 60),
                 steps, isGreen);
 
-        // Reset Sequence langkah
-        currentStepSequence = 1;
+        // Reset sequence suara langkah
+        // Pastikan variabel 'currentStepSequence' dideklarasikan di class (private int currentStepSequence = 1;)
+        // Jika belum ada, tambahkan di atas atau hapus baris ini jika tidak pakai logika sequence suara
+        // currentStepSequence = 1;
 
-        // Update timer delay sesuai dadu
-        animTimer.setDelay(getAnimSpeed(lastDiceRoll));
+        animTimer.setDelay(getAnimSpeed(lastDiceRoll)); // Sesuaikan kecepatan
         animTimer.start();
     }
 
@@ -460,7 +473,7 @@ public class LuckySnakeLadder extends JPanel {
         d.setLocationRelativeTo(this);
 
         // Auto Close dalam 2 detik jika user malas klik
-        Timer autoCloseTimer = new Timer(1000, e -> d.dispose());
+        Timer autoCloseTimer = new Timer(10000, e -> d.dispose());
         autoCloseTimer.setRepeats(false);
         autoCloseTimer.start();
 
@@ -535,13 +548,13 @@ public class LuckySnakeLadder extends JPanel {
                 mainApp.getRaceWins(p2.name) - mainApp.getRaceWins(p1.name)
         );
         raceRankQueue.addAll(players);
-        JPanel racePanel = createRankListPanel("🏆 KLASEMEN RACE WINS", raceRankQueue, true);
+        JPanel racePanel = createRankListPanel("Ranking Jumlah Kemenangan", raceRankQueue, true);
 
         PriorityQueue<Player> scoreRankQueue = new PriorityQueue<>((p1, p2) ->
                 mainApp.getTotalScore(p2.name) - mainApp.getTotalScore(p1.name)
         );
         scoreRankQueue.addAll(players);
-        JPanel scorePanel = createRankListPanel("💰 KLASEMEN TOTAL POIN", scoreRankQueue, false);
+        JPanel scorePanel = createRankListPanel("Ranking Jumlah poin", scoreRankQueue, false);
 
         contentPanel.add(racePanel);
         contentPanel.add(scorePanel);

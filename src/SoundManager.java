@@ -3,7 +3,7 @@ import java.io.File;
 import java.net.URL;
 
 public class SoundManager {
-    private float currentVolume = 1f; // Master Volume
+    private float currentVolume = 0.75f; // Master Volume
     private float bgmScaleFactor = 0.9f; // Skala BGM (1.0 = Full, 0.5 = Half)
 
     private Clip winMusicClip;
@@ -29,15 +29,6 @@ public class SoundManager {
                 }
             } catch (Exception ignored) {}
         }).start();
-    }
-
-    // --- FITUR DUCKING (Kecilin BGM Otomatis) ---
-    public void setBGMScale(float scale) {
-        this.bgmScaleFactor = scale;
-        // Langsung update volume BGM kalau sedang jalan
-        if (bgmClip != null && bgmClip.isOpen()) {
-            setClipVolume(bgmClip, currentVolume * bgmScaleFactor);
-        }
     }
 
     // --- PLAY BACKGROUND MUSIC (Looping) ---
