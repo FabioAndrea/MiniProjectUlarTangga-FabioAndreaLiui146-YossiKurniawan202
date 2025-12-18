@@ -330,10 +330,7 @@ public class LuckySnakeLadder extends JPanel {
                 isGreen ? new Color(39, 174, 96) : new Color(231, 76, 60),
                 steps, isGreen);
 
-        // Reset sequence suara langkah
-        // Pastikan variabel 'currentStepSequence' dideklarasikan di class (private int currentStepSequence = 1;)
-        // Jika belum ada, tambahkan di atas atau hapus baris ini jika tidak pakai logika sequence suara
-        // currentStepSequence = 1;
+        currentStepSequence = 1;
 
         animTimer.setDelay(getAnimSpeed(lastDiceRoll)); // Sesuaikan kecepatan
         animTimer.start();
