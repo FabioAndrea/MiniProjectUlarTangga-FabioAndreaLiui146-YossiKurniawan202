@@ -133,5 +133,32 @@ public class BoardPanel extends JPanel {
                 g2d.drawLine((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y);
             }
         }
+        if (shortestPath != null && shortestPath.size() > 1) {
+            // Efek Glow/Neon untuk jalur Dijkstra
+            g2d.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+            // Warna Kuning/Emas Neon
+            g2d.setColor(new Color(255, 215, 0, 180));
+
+            for (int i = 0; i < shortestPath.size() - 1; i++) {
+                int nodeA = shortestPath.get(i);
+                int nodeB = shortestPath.get(i + 1);
+
+                // Pastikan tidak error jika node null
+                if (tilePositions[nodeA] != null && tilePositions[nodeB] != null) {
+                    Point2D.Double p1 = tilePositions[nodeA];
+                    Point2D.Double p2 = tilePositions[nodeB];
+
+                    g2d.drawLine((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y);
+                }
+            }
+
+            // Opsional: Gambar titik di setiap langkah biar lebih jelas
+            g2d.setColor(Color.WHITE);
+            for (int nodeIndex : shortestPath) {
+                Point2D.Double p = tilePositions[nodeIndex];
+                g2d.fillOval((int)p.x - 3, (int)p.y - 3, 6, 6);
+            }
+        }
     }
 }

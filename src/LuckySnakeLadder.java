@@ -315,21 +315,14 @@ public class LuckySnakeLadder extends JPanel {
                 if (simPos == MAX_TILE) break;
             }
         } else {
-            // --- LOGIKA MUNDUR (MERAH) ---
-            // FIX: Tidak lagi menggunakan history.pop()
-            // Kita gunakan matematika murni (posisi - 1) agar tidak turun lewat tangga
             for (int i = 0; i < steps; i++) {
                 int next = simPos - 1;
                 if (next < 1) next = 1; // Batas bawah 1
 
-                // PENTING: Kita PUSH posisi baru ke stack, BUKAN POP.
-                // Ini artinya kita membuat jejak langkah baru (mundur).
+                // kita membuat jejak langkah baru (mundur).
                 history.push(next);
                 animQueue.add(next);
                 simPos = next;
-
-                // CATATAN: Di sini TIDAK ADA pengecekan tangga.
-                // Jadi jika mundur melewati tangga, dia hanya lewat saja (tidak naik/turun).
             }
         }
 
