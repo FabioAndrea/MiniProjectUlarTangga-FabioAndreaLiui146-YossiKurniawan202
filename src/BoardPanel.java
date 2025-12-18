@@ -23,12 +23,13 @@ public class BoardPanel extends JPanel {
         this.players = players;
 
         setLayout(null);
-        setBackground(new Color(10, 10, 30));
+        setBackground(new Color(10, 10, 30)); // Tema Galaksi
 
         calculateGalaxySpiralPositions();
         createTiles();
     }
 
+    // Kalkulasi Koordinat Spiral
     private void calculateGalaxySpiralPositions() {
         tilePositions[TOTAL_TILES] = new Point2D.Double(CENTER_X, CENTER_Y);
         double currentRadius = 70.0;
@@ -105,7 +106,7 @@ public class BoardPanel extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Bintang
+        // Gambar Bintang
         g2d.setColor(Color.WHITE);
         for (int i = 0; i < 250; i++) {
             int x = (int)(Math.random() * getWidth());
@@ -113,7 +114,7 @@ public class BoardPanel extends JPanel {
             g2d.fillOval(x, y, (int)(Math.random()*2)+1, (int)(Math.random()*2)+1);
         }
 
-        // Jalur
+        // Gambar Jalur
         g2d.setStroke(new BasicStroke(2f));
         g2d.setColor(new Color(255, 255, 255, 40));
         for (int i = 1; i < TOTAL_TILES; i++) {
@@ -122,7 +123,7 @@ public class BoardPanel extends JPanel {
             if (p1 != null && p2 != null) g2d.drawLine((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y);
         }
 
-        // Tangga
+        // Gambar Tangga (Warp)
         if (ladders != null) {
             for (Map.Entry<Integer, Integer> entry : ladders.entrySet()) {
                 Point2D.Double p1 = tilePositions[entry.getKey()];
@@ -131,33 +132,6 @@ public class BoardPanel extends JPanel {
                 float[] dash = {10f, 10f};
                 g2d.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10f, dash, 0f));
                 g2d.drawLine((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y);
-            }
-        }
-        if (shortestPath != null && shortestPath.size() > 1) {
-            // Efek Glow/Neon untuk jalur Dijkstra
-            g2d.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-
-            // Warna Kuning/Emas Neon
-            g2d.setColor(new Color(255, 215, 0, 180));
-
-            for (int i = 0; i < shortestPath.size() - 1; i++) {
-                int nodeA = shortestPath.get(i);
-                int nodeB = shortestPath.get(i + 1);
-
-                // Pastikan tidak error jika node null
-                if (tilePositions[nodeA] != null && tilePositions[nodeB] != null) {
-                    Point2D.Double p1 = tilePositions[nodeA];
-                    Point2D.Double p2 = tilePositions[nodeB];
-
-                    g2d.drawLine((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y);
-                }
-            }
-
-            // Opsional: Gambar titik di setiap langkah biar lebih jelas
-            g2d.setColor(Color.WHITE);
-            for (int nodeIndex : shortestPath) {
-                Point2D.Double p = tilePositions[nodeIndex];
-                g2d.fillOval((int)p.x - 3, (int)p.y - 3, 6, 6);
             }
         }
     }

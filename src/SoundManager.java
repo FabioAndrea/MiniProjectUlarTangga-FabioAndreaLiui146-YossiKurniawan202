@@ -3,15 +3,14 @@ import java.io.File;
 import java.net.URL;
 
 public class SoundManager {
-    private float currentVolume = 0.75f; // Master Volume
-    private float bgmScaleFactor = 0.9f; // Skala BGM (1.0 = Full, 0.5 = Half)
+    private float currentVolume = 0.75f;
+    private float bgmScaleFactor = 1.0f; // Scale 1.0 = Full, 0.6 = Ducking
 
     private Clip winMusicClip;
     private Clip bgmClip;
 
-    // --- CONSTRUCTOR: AUTO WARM-UP ---
+    // Thread warm-up agar audio tidak delay
     public SoundManager() {
-        // Thread khusus buat manasin AudioSystem biar klik pertama gak delay
         new Thread(() -> {
             try {
                 AudioInputStream audioInput = loadAudio("click.wav");
@@ -20,7 +19,7 @@ public class SoundManager {
                     clip.open(audioInput);
                     if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
                         FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-                        gainControl.setValue(gainControl.getMinimum()); // Mute
+                        gainControl.setValue(gainControl.getMinimum());
                     }
                     clip.start();
                     Thread.sleep(50);
@@ -31,9 +30,14 @@ public class SoundManager {
         }).start();
     }
 
-    // --- PLAY BACKGROUND MUSIC (Looping) ---
+    public void setBGMScale(float scale) {
+        this.bgmScaleFactor = scale;
+        if (bgmClip != null && bgmClip.isOpen()) {
+            setClipVolume(bgmClip, currentVolume * bgmScaleFactor);
+        }
+    }
+
     public void playBGM(String filename) {
-        // Jangan restart kalau lagunya SAMA dan sedang main
         if (bgmClip != null && bgmClip.isRunning()) return;
 
         stopWinMusic();
@@ -45,10 +49,7 @@ public class SoundManager {
 
             bgmClip = AudioSystem.getClip();
             bgmClip.open(audioInput);
-
-            // Set volume dengan memperhitungkan Scale Factor (Ducking)
             setClipVolume(bgmClip, currentVolume * bgmScaleFactor);
-
             bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
             bgmClip.start();
         } catch (Exception e) {
@@ -64,10 +65,9 @@ public class SoundManager {
         }
     }
 
-    // --- PLAY WIN MUSIC (Looping) ---
     public void playWinMusic(String filename) {
-        stopBGM();      // Matiin BGM biar gak tabrakan
-        stopWinMusic(); // Reset win music
+        stopBGM();
+        stopWinMusic();
 
         try {
             AudioInputStream audioInput = loadAudio(filename);
@@ -75,8 +75,7 @@ public class SoundManager {
 
             winMusicClip = AudioSystem.getClip();
             winMusicClip.open(audioInput);
-            setClipVolume(winMusicClip, currentVolume); // Win music selalu Full Scale
-
+            setClipVolume(winMusicClip, currentVolume);
             winMusicClip.loop(Clip.LOOP_CONTINUOUSLY);
             winMusicClip.start();
         } catch (Exception e) {
@@ -91,7 +90,7 @@ public class SoundManager {
         }
     }
 
-    // --- PLAY SFX (Fire and Forget) ---
+    // Play SFX di thread terpisah (No-Lag)
     public void playSFX(String filename) {
         playSound(filename, -1);
     }
@@ -100,14 +99,11 @@ public class SoundManager {
         playSound(filename, durationMs);
     }
 
-    // --- MASTER VOLUME CONTROL ---
     public void setVolume(float volume) {
         this.currentVolume = volume;
-        // Update Win Music (Full)
         if (winMusicClip != null && winMusicClip.isOpen()) {
             setClipVolume(winMusicClip, volume);
         }
-        // Update BGM (Dikali Scale Factor)
         if (bgmClip != null && bgmClip.isOpen()) {
             setClipVolume(bgmClip, volume * bgmScaleFactor);
         }
@@ -117,7 +113,6 @@ public class SoundManager {
         return (int) (currentVolume * 100);
     }
 
-    // --- INTERNAL HELPER ---
     private void playSound(String filename, int durationMs) {
         new Thread(() -> {
             try {
@@ -126,7 +121,7 @@ public class SoundManager {
 
                 Clip clip = AudioSystem.getClip();
                 clip.open(audioInput);
-                setClipVolume(clip, currentVolume); // SFX selalu ikut Master Volume
+                setClipVolume(clip, currentVolume);
                 clip.start();
 
                 if (durationMs > 0) {
